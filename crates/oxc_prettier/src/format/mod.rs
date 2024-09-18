@@ -1005,19 +1005,35 @@ impl<'a> Format<'a> for TSTypeLiteral<'a> {
 
 impl<'a> Format<'a> for TSTypeOperator<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
-        let mut parts = p.vec();
-
-        parts.push(ss!(self.operator.to_str()));
-        parts.push(space!());
-        parts.push(self.type_annotation.format(p));
-
-        Doc::Array(parts)
+        array!(p, ss!(self.operator.to_str()), space!(), self.type_annotation.format(p))
     }
 }
 
 impl<'a> Format<'a> for TSTypePredicate<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
-        line!()
+        let mut parts = p.vec();
+
+        if self.asserts {
+            parts.push(ss!("asserts "));
+        }
+
+        parts.push(self.parameter_name.format(p));
+
+        if let Some(type_annotation) = &self.type_annotation {
+            parts.push(ss!(" is "));
+            parts.push(type_annotation.type_annotation.format(p));
+        }
+
+        Doc::Array(parts)
+    }
+}
+
+impl<'a> Format<'a> for TSTypePredicateName<'a> {
+    fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
+        match self {
+            TSTypePredicateName::Identifier(identifier) => identifier.format(p),
+            TSTypePredicateName::This(this_param) => this_param.format(p),
+        }
     }
 }
 

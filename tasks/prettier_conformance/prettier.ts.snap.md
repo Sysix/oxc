@@ -1,4 +1,4 @@
-ts compatibility: 167/526 (31.75%)
+ts compatibility: 169/526 (32.13%)
 
 # Failed
 
@@ -40,7 +40,6 @@ ts compatibility: 167/526 (31.75%)
 
 ### assert
 * assert/comment.ts
-* assert/index.ts
 
 ### assignment
 * assignment/issue-10846.ts
@@ -477,9 +476,6 @@ ts compatibility: 167/526 (31.75%)
 ### optional-variance
 * optional-variance/basic.ts
 * optional-variance/with-jsx.tsx
-
-### predicate-types
-* predicate-types/predicate-types.ts
 
 ### prettier-ignore
 * prettier-ignore/issue-14238.ts
