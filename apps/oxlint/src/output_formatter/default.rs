@@ -40,8 +40,35 @@ impl Default for GraphicalReporter {
 }
 
 impl DiagnosticReporter for GraphicalReporter {
-    fn finish(&mut self, _: &DiagnosticResult) -> Option<String> {
-        None
+    fn finish(&mut self, result: &DiagnosticResult) -> Option<String> {
+        let mut output = String::new();
+
+        if result.warnings_count() + result.errors_count() > 0 {
+            output.push('\n');
+        }
+
+        output.push_str(
+            format!(
+                "Found {} warning{} and {} error{}.\n",
+                result.warnings_count(),
+                if result.warnings_count() == 1 { "" } else { "s" },
+                result.errors_count(),
+                if result.errors_count() == 1 { "" } else { "s" },
+            )
+            .as_str(),
+        );
+
+        if result.max_warnings_exceeded() {
+            output.push_str(
+                format!(
+                    "Exceeded maximum number of warnings. Found {}.\n",
+                    result.warnings_count()
+                )
+                .as_str(),
+            );
+        }
+
+        Some(output)
     }
 
     fn render_error(&mut self, error: Error) -> Option<String> {
@@ -81,12 +108,46 @@ mod test {
     }
 
     #[test]
-    fn reporter_finish() {
+    fn reporter_finish_no_results() {
         let mut reporter = GraphicalReporter::default();
 
         let result = reporter.finish(&DiagnosticResult::default());
 
-        assert!(result.is_none());
+        assert!(result.is_some());
+        assert_eq!(result.unwrap(), "Found 0 warnings and 0 errors.\n");
+    }
+
+    #[test]
+    fn reporter_finish_one_warning_and_one_error() {
+        let mut reporter = GraphicalReporter::default();
+
+        let result = reporter.finish(&DiagnosticResult::new(1, 1, false));
+
+        assert!(result.is_some());
+        assert_eq!(result.unwrap(), "\nFound 1 warning and 1 error.\n");
+    }
+
+    #[test]
+    fn reporter_finish_multiple_warning_and_errors() {
+        let mut reporter = GraphicalReporter::default();
+
+        let result = reporter.finish(&DiagnosticResult::new(6, 4, false));
+
+        assert!(result.is_some());
+        assert_eq!(result.unwrap(), "\nFound 6 warnings and 4 errors.\n");
+    }
+
+    #[test]
+    fn reporter_finish_exceeded_warnings() {
+        let mut reporter = GraphicalReporter::default();
+
+        let result = reporter.finish(&DiagnosticResult::new(6, 4, true));
+
+        assert!(result.is_some());
+        assert_eq!(
+            result.unwrap(),
+            "\nFound 6 warnings and 4 errors.\nExceeded maximum number of warnings. Found 6.\n"
+        );
     }
 
     #[test]

@@ -81,9 +81,9 @@ impl Runner for LintRunner {
             // If explicit paths were provided, but all have been
             // filtered, return early.
             if provided_path_count > 0 {
+                // ToDo: when oxc_linter (config) validates the configuration, we can use exit_code = 1 to fail
                 return CliRunResult::LintResult(LintResult {
                     duration: now.elapsed(),
-                    deny_warnings: warning_options.deny_warnings,
                     ..LintResult::default()
                 });
             }
@@ -211,14 +211,17 @@ impl Runner for LintRunner {
 
         let diagnostic_result = diagnostic_service.run(&mut stdout);
 
+        let diagnostic_failed = diagnostic_result.max_warnings_exceeded()
+            || diagnostic_result.errors_count() > 0
+            || warning_options.deny_warnings && diagnostic_result.warnings_count() > 0;
+
         CliRunResult::LintResult(LintResult {
             duration: now.elapsed(),
             number_of_rules: lint_service.linter().number_of_rules(),
             number_of_files,
             number_of_warnings: diagnostic_result.warnings_count(),
             number_of_errors: diagnostic_result.errors_count(),
-            max_warnings_exceeded: diagnostic_result.max_warnings_exceeded(),
-            deny_warnings: warning_options.deny_warnings,
+            exit_code: u8::from(diagnostic_failed),
             print_summary: matches!(output_options.format, OutputFormat::Default),
         })
     }
